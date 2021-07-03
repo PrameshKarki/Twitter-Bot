@@ -1,9 +1,5 @@
 // *Import modules
-const fs = require("fs");
-const path = require("path");
-
 const twit = require("twit");
-const mongoose = require("mongoose");
 
 // *Load environment variables
 require("dotenv").config();
@@ -27,6 +23,32 @@ const stream = twitter.stream("statuses/filter", {
 
 // *Listen on tweet event
 stream.on("tweet",async(tweet)=>{
-
-    // TODO:Retweet tweet
+  if (!isOwnTweet(tweet)) {
+    const tweetID = tweet.id_str;
+    try {
+      // *Retweet tweet
+      await retweet(tweetID);
+    } catch (e) {
+      console.log("Error occurred while retweeting tweet! ")
+    }
+  }
 });
+
+// *Method to check if the user ID is equal to bot user ID
+function isOwnTweet(tweet) {
+  return tweet.user.id == process.env.BOT_USER_ID;
+}
+
+// *Method to retweet
+function retweet(id) {
+  return new Promise((resolve, reject) => {
+    let retweetParams = {id};
+    twitter.post("statuses/retweet/:id", retweetParams, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(data);
+    });
+  });
+}
+
